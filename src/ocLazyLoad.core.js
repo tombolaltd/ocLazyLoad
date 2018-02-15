@@ -25,6 +25,7 @@
             },
             debug = false,
             events = false,
+            diCache = true,
             moduleCache = [],
             modulePromises = {};
 
@@ -52,6 +53,10 @@
 
             if(angular.isDefined(config.events)) {
                 events = config.events;
+            }
+
+            if(angular.isDefined(config.diCache)) {
+                diCache = config.diCache;
             }
         };
 
@@ -211,11 +216,22 @@
             if(angular.isUndefined(regInvokes[moduleName][type])) {
                 regInvokes[moduleName][type] = {};
             }
-            var onInvoke = function(invokeName, invoke) {
-                if(!regInvokes[moduleName][type].hasOwnProperty(invokeName)) {
+            var onInvoke = function onInvoke(invokeName, invoke) {
+                if (!regInvokes[moduleName][type].hasOwnProperty(invokeName)) {
                     regInvokes[moduleName][type][invokeName] = [];
                 }
-                if(checkHashes(invoke, regInvokes[moduleName][type][invokeName])) {
+
+                if (!diCache) {
+                    if (regInvokes[moduleName][type][invokeName].indexOf(invoke) === -1) {
+                        newInvoke = true;
+                        regInvokes[moduleName][type][invokeName].push(invoke);
+                        broadcast('ocLazyLoad.componentLoaded', [moduleName, type, invokeName]);
+                    }
+
+                    return;
+                }
+
+                if (checkHashes(invoke, regInvokes[moduleName][type][invokeName])) {
                     newInvoke = true;
                     regInvokes[moduleName][type][invokeName].push(invoke);
                     broadcast('ocLazyLoad.componentLoaded', [moduleName, type, invokeName]);
